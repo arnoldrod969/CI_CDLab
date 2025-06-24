@@ -25,6 +25,7 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: todo_project.settings
         run: |
+          cd todo_project
           python manage.py test
 
   deploy:
