@@ -116,6 +116,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# todo_project/settings.py
+STATIC_ROOT = BASE_DIR / 'static'  # Crée un dossier 'static' à la racine du projet
+STATICFILES_DIRS = []  # Optionnel : pour ajouter des dossiers statiques supplémentaires
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
