@@ -38,7 +38,7 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCwGX/ZEsMpcUWQkvK4mHURs56IEith1jcLKEgcLocaNfJ39AL6ARY48bJJ0aFNpwWTUD+SX1KRh15DCsjY9r3CX+oHPP6RIySzV/b0oHi3P/d/rygN/nOsA0zUMq7U3i+WcidCfNgAS8X1bfNgXh6OuaU+/k5yLiiOP5FzpKZ5tPROUbRWokFCdpFOEDn9HGomFBmW0d4RR1GLPTVYIOSygt+UvIQ1s4MBSqhjGch/hSF6Er17fcUCX9TJgwUh4TQwQSiRaZsTBttryg7KtIbcGt14J+QG5kFReT9jjKM/Yp9WdChog8Sva+ZjpBzQgkDqluk9B7/4QmBVba/3U0V34hFB7bhGbDg5BMJX7zoVFp73RYNszlVLW2/BST5kL0dJnW/QAWx1ma+Y1tXKX3iuqCufTOSuMrQSVpt4O6gnq8tMcNbgYKlzRGa7kETcPhUkKfuGG03felDgGDI441rYq0tPDnCHfhz5HhHQE8ey8oQub7+9dLsN91RomnbMt1/vFjO++x8xli+bkP503vgqR6jZuJe37NaCJDtAYY0PTFRuGJs8HVTHEjouLF5cOZTrRhri9j0gkbs3p5Ru5EolTIgWuVRHo3X3GtvF/SHRtNgUn2YZ6V7KJqNHk+QyUHmmENTaHCYSUAfgiIzqcQdKka4yBuzDFJgmq7W6zuB4eQ== arnoldrod969@gmail.com'
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to VPS
         env:
