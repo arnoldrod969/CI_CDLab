@@ -1,4 +1,4 @@
-name: Django CI/CD Simple
+name: Django CI/CD with PR Auto-merge
 
 on:
   push:
@@ -41,19 +41,9 @@ jobs:
           pip install flake8
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      
-      - name: Test results summary
-        run: |
-          echo "✅ All tests passed successfully!"
-          echo "✅ Code quality checks completed!"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "🔄 Pull Request is ready for review and merge"
-          else
-            echo "🚀 Push to develop completed - ready for PR creation"
-          fi
 
-  # Auto-créer une PR vers main si push sur develop et tests OK
-  create-pull-request:
+  # Créer et auto-merger une PR vers main si push sur develop et tests OK
+  create-and-merge-pr:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -64,6 +54,7 @@ jobs:
           fetch-depth: 0
       
       - name: Create Pull Request
+        id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -80,13 +71,21 @@ jobs:
             - ✅ Code quality checks completed
             - 🚀 Ready for production deployment
             
-            ### Next Steps:
-            1. Review the changes below
-            2. Merge this PR to trigger deployment
-            3. Monitor deployment status
-            
             ---
-            *This PR was automatically created after successful tests on the develop branch.*
+            *This PR was automatically created and will be auto-merged after successful tests.*
+      
+      - name: Auto-merge Pull Request
+        if: steps.create_pr.outputs.pull-request-number
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --merge --auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Wait for merge and notify
+        if: steps.create_pr.outputs.pull-request-number
+        run: |
+          echo "🎉 PR #${{ steps.create_pr.outputs.pull-request-number }} auto-merged successfully!"
+          echo "🚀 Deployment will start automatically"
 
   # Déploiement après merge sur main
   deploy:
