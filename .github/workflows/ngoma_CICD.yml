@@ -1,11 +1,15 @@
-name: Django CI/CD
+name: Django CI/CD with Pull Requests
 
 on:
   push:
+    branches: [ develop ]
+  pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  # Tests sur develop et PR vers main
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,10 +31,65 @@ jobs:
         run: |
           cd todo_project
           python manage.py test
+      
+      - name: Run code quality checks
+        run: |
+          pip install flake8 coverage
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Run coverage
+        run: |
+          cd todo_project
+          coverage run --source='.' manage.py test
+          coverage report
+          coverage html
+      
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Tests passed successfully! Ready for merge and deployment.'
+            })
 
-  deploy:
-    needs: build
+  # Auto-créer une PR vers main si push sur develop et tests OK
+  create-pull-request:
     runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          head: develop
+          title: "Auto PR: Deploy tested code from develop to main"
+          body: |
+            🤖 **Automated Pull Request**
+            
+            ✅ All tests passed on develop branch
+            ✅ Code quality checks completed
+            
+            This PR is ready for review and merge.
+            
+            **Changes include:**
+            - Latest code from develop branch
+            - All tests passing
+            - Ready for production deployment
+
+  # Déploiement après merge sur main
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -55,3 +114,7 @@ jobs:
             sudo systemctl restart django_app
             sudo systemctl restart nginx
           EOF
+      
+      - name: Deployment success notification
+        run: |
+          echo "🎉 Production deployment completed successfully!"
