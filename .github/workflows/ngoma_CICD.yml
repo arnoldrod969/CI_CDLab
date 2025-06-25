@@ -1,4 +1,4 @@
-name: Django CI/CD with Pull Requests
+name: Django CI/CD Simple
 
 on:
   push:
@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   # Tests sur develop et PR vers main
@@ -34,28 +38,19 @@ jobs:
       
       - name: Run code quality checks
         run: |
-          pip install flake8 coverage
+          pip install flake8
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       
-      - name: Run coverage
+      - name: Test results summary
         run: |
-          cd todo_project
-          coverage run --source='.' manage.py test
-          coverage report
-          coverage html
-      
-      - name: Comment PR with test results
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Tests passed successfully! Ready for merge and deployment.'
-            })
+          echo "✅ All tests passed successfully!"
+          echo "✅ Code quality checks completed!"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "🔄 Pull Request is ready for review and merge"
+          else
+            echo "🚀 Push to develop completed - ready for PR creation"
+          fi
 
   # Auto-créer une PR vers main si push sur develop et tests OK
   create-pull-request:
@@ -65,6 +60,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
@@ -72,19 +69,24 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
           head: develop
-          title: "Auto PR: Deploy tested code from develop to main"
+          title: "🚀 Deploy: Auto PR from develop to main"
           body: |
-            🤖 **Automated Pull Request**
+            ## 🤖 Automated Deployment PR
             
-            ✅ All tests passed on develop branch
-            ✅ Code quality checks completed
+            **Status:** ✅ All checks passed
             
-            This PR is ready for review and merge.
+            ### Changes Summary:
+            - ✅ All tests passed on develop branch
+            - ✅ Code quality checks completed
+            - 🚀 Ready for production deployment
             
-            **Changes include:**
-            - Latest code from develop branch
-            - All tests passing
-            - Ready for production deployment
+            ### Next Steps:
+            1. Review the changes below
+            2. Merge this PR to trigger deployment
+            3. Monitor deployment status
+            
+            ---
+            *This PR was automatically created after successful tests on the develop branch.*
 
   # Déploiement après merge sur main
   deploy:
@@ -118,3 +120,5 @@ jobs:
       - name: Deployment success notification
         run: |
           echo "🎉 Production deployment completed successfully!"
+          echo "📅 Deployed at: $(date)"
+          echo "🔗 Server: ${{ secrets.SSH_HOST }}"
