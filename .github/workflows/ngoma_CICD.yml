@@ -77,10 +77,11 @@ jobs:
           echo "📅 Merged at: $(date)"
           echo "🚀 Deployment will start automatically on main branch"
 
-  # Déploiement après merge sur main
+  # Déploiement après merge vers main
   deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: merge-to-main
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
